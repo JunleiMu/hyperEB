@@ -1,0 +1,77 @@
+# Smoothly expanding piston of Arienti et al. (2003)
+# and Muralidharan & Menon (2018).
+#
+# Gas initially occupies 0.5 <= x <= 1.  The left EB wall moves with
+# v_l=-0.5, the right physical wall is fixed and reflecting, and
+#   rho = 1 + 0.2 cos(2 pi (x-0.5)),
+#   u   = 2 (1-x) v_l,
+#   p   = rho^gamma.
+# The exact entropy invariant p/rho^gamma remains one while the solution is
+# smooth.  The validation driver overrides amr.n_cell=N 4 4 and shrinks the
+# transverse box to +/-2/N so that all cells remain cubic on every grid.
+
+case = smooth_expanding_piston
+max_step = 200000
+stop_time = 0.5
+
+geometry.is_periodic = 0 0 0
+geometry.coord_sys = 0
+geometry.prob_lo = 0.0 -0.0625 -0.0625
+geometry.prob_hi = 1.0  0.0625  0.0625
+amr.n_cell = 32 4 4
+
+# x-low remains covered throughout this test.  x-high is the fixed reflecting
+# wall; transverse reflection makes the mandatory 3-D solve quasi-1-D.
+hypereb.lo_bc = 2 3 3
+hypereb.hi_bc = 4 3 3
+hypereb.cfl = 0.5
+hypereb.moving_wall_cfl = 1
+hypereb.v = 0
+amr.v = 0
+
+amr.check_input = 0
+amr.max_level = 0
+amr.blocking_factor = 4
+amr.max_grid_size = 128
+amr.loadbalance_with_workestimates = 1
+amr.loadbalance_level0_int = 1
+
+amr.checkpoint_files_output = 0
+amr.check_int = -1
+amr.plot_files_output = 1
+amr.plot_file = plt
+amr.plot_int = 1000000
+amr.derive_plot_vars = pressure x_velocity y_velocity z_velocity
+
+# PlaneIF is positive in x < x_wall for normal (-1,0,0), so that region is
+# solid and the gas lies to the right of the receding wall.
+eb2.geom_type = moving_plane
+eb2.dynamic_geometry = 1
+eb2.plane_initial_point = 0.5 0.0 0.0
+eb2.plane_normal = -1.0 0.0 0.0
+eb2.plane_velocity = -0.5 0.0 0.0
+eb2.plane_acceleration = 0.0 0.0 0.0
+eb2.wall_translation = -0.5 0.0 0.0
+eb2.wall_acceleration = 0.0 0.0 0.0
+eb2.cover_multiple_cuts = 1
+
+physics.gamma = 1.4
+physics.eos_mu = 8314.46261815324
+physics.R_specific = 1.0
+physics.do_diffusion = 0
+physics.eb_wall_diffusion = 0
+prob.rho_inf = 1.0
+prob.p_inf = 1.0
+prob.velocity_inf = 0.0 0.0 0.0
+prob.gas_constant = 1.0
+prob.piston_velocity = -0.5
+
+hypereb.do_reflux = 1
+
+
+diagnostics.residual_int = 100
+diagnostics.admissibility = 1
+diagnostics.moving_wall_cfl = 0
+diagnostics.residual_file = smooth_expanding_piston_residual.csv
+diagnostics.force_int = 0
+diagnostics.surface_int = 0
